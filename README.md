@@ -123,8 +123,8 @@ apis/
 
 ```
 libs/
-├── server-fetcher.ts            # Axios 기반 서버 HTTP 클라이언트
-├── registry.tsx # SSR styled-components 설정
+├── server-fetcher.ts # Axios 기반 서버 HTTP 클라이언트
+├── registry.tsx      # SSR styled-components 설정
 └── index.ts
 ```
 
