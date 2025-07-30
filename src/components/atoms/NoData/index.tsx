@@ -14,7 +14,14 @@ interface NoDataProps {
 const NoData: FC<NoDataProps> = ({ message }) => {
   return (
     <Container>
-      <Image src="/nobook.png" alt="데이터 없음" width={120} height={120} />
+      <Image
+        src="/nobook.png"
+        alt="데이터 없음"
+        width={120}
+        height={120}
+        priority={false}
+        loading="lazy"
+      />
       <Text variant="caption" color={theme.colors.text.secondary}>
         {message}
       </Text>
