@@ -2,9 +2,13 @@
 
 CDRI 프론트엔드 사전과제 by 이병욱
 
+<img width="1096" height="1048" alt="Frame 34125" src="https://github.com/user-attachments/assets/acd81817-c504-4d79-b146-5fb3a08b101f" />
+
+
 ## 프로젝트 개요
 
 사용자가 도서를 검색하고, 상세 정보를 확인하며, 관심 있는 책을 찜할 수 있는 웹 애플리케이션입니다.
+
 `React`, `Next.js (App Router)`, `TypeScript`, `React-Query`, `styled-components`를 사용했습니다.
 
 ## 실행 방법
@@ -12,8 +16,8 @@ CDRI 프론트엔드 사전과제 by 이병욱
 1. **저장소 클론**
 
 ```bash
-git clone <repository-url>
-cd cdri-test
+git clone https://github.com/crowrish/cdri-books-byungwooklee.git
+cd cdri-books-byungwooklee
 ```
 
 2. **환경변수 설정**
@@ -47,7 +51,7 @@ app/
 ├── layout.tsx   # 전역 레이아웃
 ├── page.tsx     # 도서 검색 페이지 (/)
 └── favorite/
-    └── page.tsx # 찜한 책 페이지 (/favorite)
+    └── page.tsx # 찜한 책 페이지  (/favorite)
 ```
 
 ### `src/components/` - 아토믹 디자인 패턴
@@ -120,7 +124,7 @@ apis/
 ```
 libs/
 ├── server-fetcher.ts            # Axios 기반 서버 HTTP 클라이언트
-├── StyledComponentsRegistry.tsx # SSR styled-components 설정
+├── registry.tsx # SSR styled-components 설정
 └── index.ts
 ```
 
@@ -250,6 +254,9 @@ const { data: books } = useBooks({
 ```
 
 ### 4. 이미지 오류 처리
+<img width="979" height="591" alt="Frame 34126" src="https://github.com/user-attachments/assets/2d3a9ba4-e0f7-4a96-8d25-42ce611309a3" />
+
+
 
 `<BookImage />` 컴포넌트에서 `thumbnail`이 없거나, 오류 발생시에 기본 이미지를 노출합니다.
 
@@ -290,7 +297,7 @@ const BookImage: FC<BookImageProps> = ({ src, width, height, alt }) => {
 - `styledComponents`
 - `images > remotePatterns`
 
-```typscript
+```ts
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -398,6 +405,9 @@ export const theme = {
 
 ### 2. 검색 기능 키보드 액션
 
+![1111](https://github.com/user-attachments/assets/95a95b0e-2407-4dbe-9def-6f41fe4b1ac4)
+
+
 #### **검색 히스토리**
 
 검색 기록 최대 8개 저장됩니다. 또한 키보드 네비게이션 (위, 아래, 엔터)을 지원합니다.
@@ -439,28 +449,22 @@ const handleKeyPress = (e: React.KeyboardEvent) => {
 
 `axios` -> `server-fetcher.ts` -> `kakao-api.server.ts`
 
-#### useBooks (react-query)
-
-`kakao-api.server.ts`의 `searchBooks` 호출
+#### server-fetcher
 
 ```ts
-const useBooks = (params: iBookSearchParams) => {
-  return useQuery({
-    queryKey: ['books', params],
-    queryFn: () => searchBooks(params), // <-서버 액션
-    enabled: !!params.query,
-  });
-};
-```
+import axios, { AxiosRequestConfig } from 'axios';
 
-### 4. 시크릿 자동 추가
+const fetcher = axios.create({ // <- axios instance 생성
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  responseType: 'json',
+  timeout: 0,
+});
 
-`baseURL` 검사후, kakao API 주소면 카카오 REST KEY 를 추가합니다.
-
-```ts
 fetcher.interceptors.request.use(
   async (config) => {
-    if (config.baseURL?.includes('https://dapi.kakao.com/')) {
+    if (config.baseURL?.includes('https://dapi.kakao.com/')) { // <- host 가 kakao 일 경우 인증 헤더 추가
       const kakaoRestKey = process.env.KAKAO_API_KEY;
       if (kakaoRestKey) {
         config.headers.Authorization = `KakaoAK ${kakaoRestKey}`;
@@ -475,7 +479,54 @@ fetcher.interceptors.request.use(
 );
 ```
 
-### 5. 페이지네이션
+#### kakao-api.server.ts
+
+```ts
+'use server';
+
+import { AxiosRequestConfig } from 'axios';
+
+import serverFetcher from '@/libs/server-fetcher';
+import type { iBookResponse, iBookSearchParams } from '@/types';
+
+const KAKAO_BASE_URL = 'https://dapi.kakao.com/v3';
+
+export const searchBooks = async (
+  params: iBookSearchParams,
+): Promise<iBookResponse> => {
+  try {
+    const config: AxiosRequestConfig = {
+      baseURL: KAKAO_BASE_URL,
+      params: params,
+    };
+    const { data } = await serverFetcher.get('/search/book', config); // <- server-fetcher 호출 
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch books:', error);
+    throw error;
+  }
+};
+
+```
+
+#### useBooks (react-query)
+
+`kakao-api.server.ts`의 `searchBooks` 호출
+
+```ts
+const useBooks = (params: iBookSearchParams) => {
+  return useQuery({
+    queryKey: ['books', params],
+    queryFn: () => searchBooks(params), // <-서버 액션
+    enabled: !!params.query,
+  });
+};
+```
+
+### 4. 페이지네이션
+
+![2222](https://github.com/user-attachments/assets/8ddd910c-39f4-46fd-9cf4-70751854cda5)
+
 
 재사용 가능한 `<Pagination />` 컴포넌트를 추가했습니다.
 
